@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trifalic47 // Terminal Portfolio</title>
+    <!-- JetBrains Mono from Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0a0a0a;
+            --accent-green: #00ff41;
+            --accent-red: #ff2222;
+            --text-body: #c8c8c8;
+            --text-heading: #ffffff;
+            --font-mono: 'JetBrains Mono', monospace;
+            --border-color: #1a1a1a;
+            --glow-green: 0 0 8px #00ff41;
+            --glow-red: 0 0 8px #ff2222;
+            --card-bg: rgba(10, 10, 10, 0.8);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-body);
+            font-family: var(--font-mono);
+            line-height: 1.6;
+            overflow-x: hidden;
+            cursor: default;
+        }
+
+        /* --- Effects --- */
+
+        /* Scanline overlay */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%,
+                rgba(0, 0, 0, 0.1) 50%
+            ), linear-gradient(
+                90deg,
+                rgba(255, 0, 0, 0.02),
+                rgba(0, 255, 0, 0.01),
+                rgba(0, 0, 255, 0.02)
+            );
+            background-size: 100% 3px, 3px 100%;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        /* CRT flicker */
+        @keyframes flicker {
+            0% { opacity: 0.971; }
+            5% { opacity: 0.985; }
+            10% { opacity: 0.963; }
+            15% { opacity: 0.999; }
+            20% { opacity: 0.978; }
+            25% { opacity: 0.989; }
+            30% { opacity: 0.966; }
+            35% { opacity: 0.982; }
+            40% { opacity: 0.971; }
+            45% { opacity: 0.993; }
+            50% { opacity: 0.967; }
+            55% { opacity: 0.988; }
+            60% { opacity: 0.974; }
+            65% { opacity: 0.991; }
+            70% { opacity: 0.969; }
+            75% { opacity: 0.985; }
+            80% { opacity: 0.972; }
+            85% { opacity: 0.997; }
+            90% { opacity: 0.968; }
+            95% { opacity: 0.989; }
+            100% { opacity: 0.975; }
+        }
+        .crt-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(18, 16, 16, 0);
+            z-index: 999;
+            pointer-events: none;
+            animation: flicker 0.15s infinite;
+        }
+
+        /* Noise filter */
+        #noise-svg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.05;
+            z-index: 1001;
+            pointer-events: none;
+        }
+
+        /* Glitch effect */
+        @keyframes glitch {
+            0% { clip-path: inset(40% 0 61% 0); transform: translate(-5px, -5px); }
+            10% { clip-path: inset(92% 0 1% 0); transform: translate(5px, 5px); }
+            20% { clip-path: inset(25% 0 58% 0); transform: translate(-5px, 5px); }
+            30% { clip-path: inset(54% 0 7% 0); transform: translate(5px, -5px); }
+            40% { clip-path: inset(58% 0 43% 0); transform: translate(-5px, -5px); }
+            50% { clip-path: inset(25% 0 14% 0); transform: translate(5px, 5px); }
+            60% { clip-path: inset(80% 0 5% 0); transform: translate(-5px, 5px); }
+            70% { clip-path: inset(43% 0 32% 0); transform: translate(5px, -5px); }
+            80% { clip-path: inset(14% 0 55% 0); transform: translate(-5px, -5px); }
+            90% { clip-path: inset(61% 0 28% 0); transform: translate(5px, 5px); }
+            100% { clip-path: inset(40% 0 61% 0); transform: translate(-5px, -5px); }
+        }
+
+        .glitch-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+        .glitch-wrapper:hover .glitch {
+            animation: glitch 0.3s cubic-bezier(.25, .46, .45, .94) both infinite;
+            text-shadow: 2px 0 var(--accent-red), -2px 0 var(--accent-green);
+        }
+        .glitch {
+            color: var(--text-heading);
+            position: relative;
+            display: inline-block;
+        }
+
+        /* Boot screen */
+        #boot-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-color);
+            color: var(--accent-green);
+            z-index: 9999;
+            padding: 20px;
+            font-size: 14px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .boot-line {
+            margin-bottom: 2px;
+            opacity: 0;
+        }
+        .boot-line.visible {
+            opacity: 1;
+        }
+        .boot-line span.ok { color: var(--accent-green); }
+        .boot-line span.warn { color: var(--accent-red); }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            background: rgba(10, 10, 10, 0.9);
+            border-bottom: 1px solid var(--border-color);
+        }
+        nav .logo {
+            color: var(--accent-green);
+            font-weight: bold;
+            text-shadow: var(--glow-green);
+        }
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+        }
+        nav a {
+            color: var(--text-body);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+        nav a:hover {
+            color: var(--accent-green);
+        }
+
+        /* Sections */
+        section {
+            min-height: 100vh;
+            padding: 120px 10% 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        h2 {
+            font-size: 24px;
+            color: var(--accent-green);
+            margin-bottom: 40px;
+            text-shadow: var(--glow-green);
+            text-transform: uppercase;
+        }
+
+        /* Hero */
+        #hero {
+            align-items: center;
+            text-align: center;
+        }
+        #hero h1 {
+            font-size: 4rem;
+            margin-bottom: 10px;
+        }
+        .tagline {
+            font-size: 1.5rem;
+            min-height: 1.5em;
+            color: var(--text-body);
+            margin-bottom: 30px;
+        }
+        .stats-block {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            text-align: left;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .stats-block p {
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        /* About */
+        #about {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 60px;
+            align-items: start;
+        }
+        .profile-container {
+            width: 300px;
+            height: 300px;
+            border: 2px solid var(--accent-green);
+            box-shadow: var(--glow-green);
+            position: relative;
+            overflow: hidden;
+            clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+        }
+        .profile-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: grayscale(1) contrast(1.2);
+        }
+        .profile-container::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 255, 65, 0.1);
+            pointer-events: none;
+        }
+        #bio-text {
+            font-size: 18px;
+            white-space: pre-wrap;
+        }
+
+        /* Projects */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 30px;
+        }
+        .terminal-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+            height: 100%;
+            position: relative;
+        }
+        .terminal-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-green);
+            box-shadow: var(--glow-green);
+        }
+        .terminal-header {
+            background: var(--border-color);
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            color: var(--text-body);
+        }
+        .terminal-dots {
+            display: flex;
+            gap: 6px;
+            margin-right: 15px;
+        }
+        .dot { width: 10px; height: 10px; border-radius: 50%; }
+        .dot.red { background: #ff5f56; }
+        .dot.yellow { background: #ffbd2e; }
+        .dot.green { background: #27c93f; }
+
+        .terminal-body {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .terminal-body h3 {
+            color: var(--accent-green);
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        .terminal-body p {
+            font-size: 14px;
+            margin-bottom: 20px;
+            flex-grow: 1;
+        }
+        .repo-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--accent-green);
+            border-top: 1px solid var(--border-color);
+            padding-top: 15px;
+        }
+        .repo-link {
+            text-decoration: none;
+            color: var(--text-heading);
+            font-weight: bold;
+            margin-top: 15px;
+            display: inline-block;
+        }
+        .repo-link:hover { color: var(--accent-green); }
+
+        /* YouTube */
+        #youtube-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 30px;
+        }
+        .video-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+        .video-card img {
+            width: 100%;
+            aspect-ratio: 16/9;
+            object-fit: cover;
+            display: block;
+        }
+        .video-content { padding: 15px; }
+        .video-content h3 { font-size: 14px; margin-bottom: 10px; height: 2.8em; overflow: hidden; }
+        .video-content a { color: var(--accent-green); text-decoration: none; font-size: 12px; }
+
+        /* Contact */
+        .contact-list {
+            list-style: none;
+        }
+        .contact-item {
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .contact-item a {
+            color: var(--accent-green);
+            text-decoration: none;
+            transition: text-shadow 0.3s;
+        }
+        .contact-item a:hover {
+            text-shadow: var(--glow-green);
+        }
+        .cmd-prefix { color: var(--accent-red); margin-right: 10px; }
+
+        /* Scroll Revel */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s ease-out;
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Cursor */
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 1.2em;
+            background-color: var(--accent-green);
+            animation: blink 1s step-end infinite;
+            vertical-align: middle;
+            margin-left: 5px;
+        }
+        @keyframes blink {
+            from, to { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* Footer */
+        footer {
+            padding: 40px;
+            text-align: center;
+            border-top: 1px solid var(--border-color);
+            font-size: 12px;
+            color: #555;
+        }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            section { padding: 100px 5% 60px; }
+            #hero h1 { font-size: 2.5rem; }
+            #about { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+            nav { padding: 15px 20px; }
+            nav ul { display: none; } /* Could add a burger menu, but for minimal, we'll keep it simple */
+        }
+    </style>
+</head>
+<body>
+
+    <svg id="noise-svg">
+        <filter id="noiseFilter">
+            <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch" />
+        </filter>
+        <rect width="100%" height="100%" filter="url(#noiseFilter)" />
+    </svg>
+
+    <div class="crt-overlay"></div>
+
+    <div id="boot-screen"></div>
+
+    <nav>
+        <div class="logo">[trifalic47]</div>
+        <ul>
+            <li><a href="#hero">~/home</a></li>
+            <li><a href="#about">~/about</a></li>
+            <li><a href="#projects">~/projects</a></li>
+            <li><a href="#youtube">~/videos</a></li>
+            <li><a href="#contact">~/contact</a></li>
+        </ul>
+    </nav>
+
+    <section id="hero">
+        <div class="glitch-wrapper">
+            <h1 class="glitch">trifalic47</h1>
+        </div>
+        <p class="tagline" id="hero-tagline"></p>
+        <div class="stats-block reveal" id="hero-stats">
+            <p><span class="cmd-prefix">$</span> cat /etc/motd</p>
+            <p id="motd-content">Fetching data...</p>
+            <p><br></p>
+            <p><span class="cmd-prefix">$</span> uptime</p>
+            <p id="uptime-content">X repos · Y followers · online <span class="cursor"></span></p>
+        </div>
+    </section>
+
+    <section id="about">
+        <div class="profile-container reveal">
+            <img id="profile-img" src="" alt="Trifalic47" loading="lazy">
+        </div>
+        <div class="about-content reveal">
+            <h2>About</h2>
+            <div id="bio-text"></div>
+        </div>
+    </section>
+
+    <section id="projects">
+        <h2>Projects</h2>
+        <div class="projects-grid" id="repos-container">
+            <!-- Repo cards here -->
+            <p>Loading projects from GitHub...</p>
+        </div>
+    </section>
+
+    <section id="youtube">
+        <h2>Latest Intel</h2>
+        <div id="youtube-grid">
+            <p>Scanning frequencies...</p>
+        </div>
+    </section>
+
+    <section id="contact">
+        <h2>Connect</h2>
+        <ul class="contact-list reveal">
+            <li class="contact-item">
+                <span class="cmd-prefix">$</span>connect --github <span class="arrow">→</span>
+                <a href="https://github.com/Trifalic47" target="_blank" id="gh-link">https://github.com/Trifalic47</a>
+            </li>
+            <li class="contact-item">
+                <span class="cmd-prefix">$</span>connect --youtube <span class="arrow">→</span>
+                <a href="https://youtube.com/@r00tgr3p" target="_blank">https://youtube.com/@r00tgr3p</a>
+            </li>
+            <li id="twitter-item" class="contact-item" style="display:none">
+                <span class="cmd-prefix">$</span>connect --twitter <span class="arrow">→</span>
+                <a href="" target="_blank" id="twitter-link"></a>
+            </li>
+            <li id="blog-item" class="contact-item" style="display:none">
+                <span class="cmd-prefix">$</span>connect --web <span class="arrow">→</span>
+                <a href="" target="_blank" id="blog-link"></a>
+            </li>
+        </ul>
+    </section>
+
+    <footer>
+        &copy; 2024-2026 TRIFALIC47 // EXPLOIT EVERYTHING
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const USERNAME = 'Trifalic47';
+            const YT_CHANNEL_ID = 'UC8jtZ7eFL5G9D56EJT36yow';
+
+            // --- Boot Sequence ---
+            const bootScreen = document.getElementById('boot-screen');
+            const bootLines = [
+                { text: '[  OK  ] Initializing kernel...', delay: 100 },
+                { text: '[  OK  ] Setting up environment...', delay: 300 },
+                { text: '[  OK  ] Mounting /proc and /sys...', delay: 500 },
+                { text: '[  OK  ] Starting network protocol...', delay: 700 },
+                { text: '[ WARN ] Human detected in proximity...', delay: 1000 },
+                { text: '[  OK  ] Bypassing bio-security...', delay: 1200 },
+                { text: '[  OK  ] Loading user profile: ' + USERNAME, delay: 1400 },
+                { text: '[  OK  ] Access granted. Welcome back.', delay: 1600 }
+            ];
+
+            bootLines.forEach((line, index) => {
+                const el = document.createElement('div');
+                el.className = 'boot-line';
+                el.innerHTML = line.text.replace('[  OK  ]', '<span class="ok">[  OK  ]</span>').replace('[ WARN ]', '<span class="warn">[ WARN ]</span>');
+                bootScreen.appendChild(el);
+                setTimeout(() => el.classList.add('visible'), line.delay);
+            });
+
+            setTimeout(() => {
+                bootScreen.style.transition = 'opacity 0.5s';
+                bootScreen.style.opacity = '0';
+                setTimeout(() => bootScreen.style.display = 'none', 500);
+            }, 1800);
+
+            // --- Typewriter Effect ---
+            async function typewriter(element, text, speed = 50) {
+                element.innerHTML = '';
+                for (let i = 0; i < text.length; i++) {
+                    element.innerHTML += text.charAt(i);
+                    await new Promise(r => setTimeout(r, speed));
+                }
+            }
+
+            // --- Fetch GitHub Data ---
+            async function fetchGitHub() {
+                try {
+                    const profileRes = await fetch(`https://api.github.com/users/${USERNAME}`);
+                    if (!profileRes.ok) throw new Error('GitHub Profile Failed');
+                    const profile = await profileRes.json();
+
+                    // Update UI
+                    document.getElementById('profile-img').src = profile.avatar_url;
+                    document.getElementById('gh-link').innerText = profile.html_url;
+                    document.getElementById('gh-link').href = profile.html_url;
+
+                    if (profile.twitter_username) {
+                        const twItem = document.getElementById('twitter-item');
+                        const twLink = document.getElementById('twitter-link');
+                        twItem.style.display = 'block';
+                        twLink.innerText = `https://twitter.com/${profile.twitter_username}`;
+                        twLink.href = `https://twitter.com/${profile.twitter_username}`;
+                    }
+
+                    if (profile.blog) {
+                        const blogItem = document.getElementById('blog-item');
+                        const blogLink = document.getElementById('blog-link');
+                        blogItem.style.display = 'block';
+                        blogLink.innerText = profile.blog.startsWith('http') ? profile.blog : `https://${profile.blog}`;
+                        blogLink.href = blogLink.innerText;
+                    }
+
+                    // Hero Stats
+                    document.getElementById('motd-content').innerText = profile.bio || 'Security Researcher & Developer';
+                    document.getElementById('uptime-content').innerHTML = `${profile.public_repos} repos · ${profile.followers} followers · online <span class="cursor"></span>`;
+
+                    // Type tagline
+                    typewriter(document.getElementById('hero-tagline'), profile.bio || 'Binary exploitation and memory corruption specialist.');
+
+                    // Bio Typewriter
+                    const observer = new IntersectionObserver((entries) => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting && !entry.target.dataset.typed) {
+                                typewriter(entry.target, profile.bio || 'Hacker at heart, building secure systems and breaking insecure ones.', 30);
+                                entry.target.dataset.typed = 'true';
+                            }
+                        });
+                    }, { threshold: 0.5 });
+                    observer.observe(document.getElementById('bio-text'));
+
+                    // Repos
+                    const reposRes = await fetch(`https://api.github.com/users/${USERNAME}/repos?sort=updated&per_page=100`);
+                    if (!reposRes.ok) throw new Error('GitHub Repos Failed');
+                    const repos = await reposRes.json();
+
+                    const filteredRepos = repos
+                        .filter(r => !r.fork)
+                        .sort((a, b) => b.stargazers_count - a.stargazers_count);
+
+                    const reposContainer = document.getElementById('repos-container');
+                    reposContainer.innerHTML = '';
+
+                    filteredRepos.forEach(repo => {
+                        const card = document.createElement('div');
+                        card.className = 'terminal-card reveal';
+                        card.innerHTML = `
+                            <div class="terminal-header">
+                                <div class="terminal-dots">
+                                    <div class="dot red"></div>
+                                    <div class="dot yellow"></div>
+                                    <div class="dot green"></div>
+                                </div>
+                                <div class="terminal-title">bash — ~/projects/${repo.name}</div>
+                            </div>
+                            <div class="terminal-body">
+                                <h3>${repo.name}</h3>
+                                <p>${repo.description || 'No description provided.'}</p>
+                                <div class="repo-meta">
+                                    <span>${repo.language || 'Unknown'}</span>
+                                    <span>★ ${repo.stargazers_count}</span>
+                                </div>
+                                <a href="${repo.html_url}" target="_blank" class="repo-link">[visit &rarr;]</a>
+                            </div>
+                        `;
+                        reposContainer.appendChild(card);
+                    });
+
+                    refreshReveals();
+
+                } catch (err) {
+                    console.error(err);
+                    document.getElementById('repos-container').innerHTML = `<p style="color:var(--accent-red)">[ERROR] Failed to fetch data from GitHub. Check connection.</p>`;
+                }
+            }
+
+            // --- Fetch YouTube Data ---
+            async function fetchYouTube() {
+                try {
+                    const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${YT_CHANNEL_ID}`;
+                    const proxyUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+
+                    const res = await fetch(proxyUrl);
+                    const data = await res.json();
+
+                    const grid = document.getElementById('youtube-grid');
+                    grid.innerHTML = '';
+
+                    if (data.status === 'ok') {
+                        data.items.slice(0, 3).forEach(video => {
+                            const card = document.createElement('div');
+                            card.className = 'video-card reveal';
+                            card.innerHTML = `
+                                <img src="${video.thumbnail}" alt="${video.title}" loading="lazy">
+                                <div class="video-content">
+                                    <h3>${video.title}</h3>
+                                    <a href="${video.link}" target="_blank">[run_video]</a>
+                                </div>
+                            `;
+                            grid.appendChild(card);
+                        });
+                    } else {
+                        throw new Error('RSS conversion failed');
+                    }
+                    refreshReveals();
+                } catch (err) {
+                    console.error(err);
+                    document.getElementById('youtube-grid').innerHTML = `<p style="color:var(--accent-red)">[ERROR] Signals lost. YouTube feed offline.</p>`;
+                }
+            }
+
+            // --- Reveal on Scroll ---
+            function refreshReveals() {
+                const reveals = document.querySelectorAll('.reveal');
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('active');
+                        }
+                    });
+                }, { threshold: 0.1 });
+
+                reveals.forEach(el => observer.observe(el));
+            }
+
+            // --- Init ---
+            fetchGitHub();
+            fetchYouTube();
+            refreshReveals();
+
+            // Debounce scroll for reveals
+            let scrollTimeout;
+            window.addEventListener('scroll', () => {
+                if (scrollTimeout) clearTimeout(scrollTimeout);
+                scrollTimeout = setTimeout(refreshReveals, 100);
+            });
+        });
+    </script>
+</body>
+</html>
