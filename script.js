@@ -70,22 +70,47 @@ document.addEventListener('DOMContentLoaded', () => {
                 ghLink.innerText = `github.com/${USERNAME}`;
                 ghLink.href = profile.html_url;
             }
+
+            const contactList = document.getElementById('contact-list');
             
-            if (profile.twitter_username) {
-                const twItem = document.getElementById('twitter-item');
-                const twLink = document.getElementById('twitter-link');
-                twItem.style.display = 'block';
-                twLink.innerText = `twitter.com/${profile.twitter_username}`;
-                twLink.href = `https://twitter.com/${profile.twitter_username}`;
+            function addContactLink(provider, url) {
+                if (!contactList) return;
+                const li = document.createElement('li');
+                li.className = 'contact-item reveal';
+                const displayUrl = url.replace(/https?:\/\//, '').replace(/\/$/, '');
+                li.innerHTML = `
+                    <span class="cmd-prefix">$</span>connect --${provider.toLowerCase()} <span class="arrow">→</span>
+                    <a href="${url}" target="_blank">${displayUrl}</a>
+                `;
+                contactList.appendChild(li);
             }
 
-            if (profile.blog) {
-                const blogItem = document.getElementById('blog-item');
-                const blogLink = document.getElementById('blog-link');
-                blogItem.style.display = 'block';
-                const blogDisplay = profile.blog.replace(/https?:\/\//, '');
-                blogLink.innerText = blogDisplay;
-                blogLink.href = profile.blog.startsWith('http') ? profile.blog : `https://${profile.blog}`;
+            // Fetch additional social accounts
+            try {
+                const socialRes = await fetch(`https://api.github.com/users/${USERNAME}/social_accounts`);
+                if (socialRes.ok) {
+                    const socials = await socialRes.json();
+                    socials.forEach(s => {
+                        // Skip if it's already rendered or redundant (like github link)
+                        if (s.provider === 'github') return;
+                        
+                        let providerName = s.provider;
+                        if (s.provider === 'generic') {
+                            if (s.url.includes('dev.to')) providerName = 'dev.to';
+                            else if (s.url.includes('linkedin')) providerName = 'linkedin';
+                            else providerName = 'web';
+                        }
+                        addContactLink(providerName, s.url);
+                    });
+                }
+            } catch (e) { console.error('Socials failed', e); }
+
+            if (profile.blog && !Array.from(contactList.querySelectorAll('a')).some(a => a.href.includes(profile.blog))) {
+                addContactLink('blog', profile.blog.startsWith('http') ? profile.blog : `https://${profile.blog}`);
+            }
+
+            if (profile.twitter_username) {
+                addContactLink('twitter', `https://twitter.com/${profile.twitter_username}`);
             }
 
             // Hero Stats
